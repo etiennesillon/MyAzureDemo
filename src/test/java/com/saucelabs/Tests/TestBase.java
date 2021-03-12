@@ -17,10 +17,12 @@ import org.testng.annotations.DataProvider;
 public class TestBase  {
 	
 	/*********************************************************************/
+	
+	public static String VERS  = "v3";
 
-    public static boolean IS_FAIL = false; 						// Fail IE tests for Failure Analysis 
+	public static boolean IS_SAUCE_CONNECT = true;
 
-    public static String MANUAL_BUILD = "jenkins-MyJenkinsDemo-984"; 	// When running manually 
+    public static String MANUAL_BUILD = "MyAzureDemo " + (IS_SAUCE_CONNECT ? "with" : "without") + " SauceConnect " + VERS; 
 
 	/*********************************************************************/
 
@@ -35,14 +37,14 @@ public class TestBase  {
 	public static final String EDGE = "MicrosoftEdge", 
 							   IE = "internet explorer",
 							   FIREFOX = "firefox",
-							   CHROME = "chrome",
-							   SAFARI = "safari";
+							   CHROME = "chrome";
 	
 	public static final String MACOS = "macOS 10.15",
 							   WIN10 = "Windows 10";
 	
 	public static final String LATEST = "latest",
-							   PERF = "perf";
+							   PERF = "perf",
+							   DEBUG = "debug";
 	
 	/*********************************************************************/
 
@@ -57,18 +59,11 @@ public class TestBase  {
     	
         return new Object[][]{
         	
-            new Object[]{PERF, LATEST, MACOS},
             new Object[]{PERF, LATEST, WIN10},
-
-            new Object[]{EDGE, LATEST, WIN10},
             new Object[]{IE, LATEST, WIN10},
+            new Object[]{EDGE, LATEST, WIN10},
             new Object[]{FIREFOX, LATEST, WIN10},
             new Object[]{CHROME, LATEST, WIN10},
-
-            new Object[]{SAFARI, LATEST, MACOS},
-            new Object[]{EDGE, LATEST, MACOS},
-            new Object[]{FIREFOX, LATEST, MACOS},
-            new Object[]{CHROME, LATEST, MACOS}
 
         };
         
@@ -94,6 +89,7 @@ public class TestBase  {
 
         if (browser.equals("perf")) {
             capabilities.setCapability("capturePerformance", true);
+            capabilities.setCapability("extendedDebugging", true);
             browser = "chrome";
             methodName = "Performance Test";
         } 
@@ -102,8 +98,10 @@ public class TestBase  {
         capabilities.setCapability(CapabilityType.VERSION, version);
         capabilities.setCapability(CapabilityType.PLATFORM, os);
         capabilities.setCapability("name", methodName);
-        
-        capabilities.setCapability("extendedDebugging", true);
+
+        if(IS_SAUCE_CONNECT) {
+            capabilities.setCapability("tunnelIdentifier", "etiennesil_tunnel_id");
+        }
         
         if (buildTag == null) {
         	buildTag = MANUAL_BUILD;
@@ -124,14 +122,22 @@ public class TestBase  {
 
     @AfterMethod
     public void tearDown(ITestResult result) throws Exception {
-        ((JavascriptExecutor) webDriver.get()).executeScript("sauce:job-result=" + (result.isSuccess() ? "passed" : "failed"));
-        webDriver.get().quit();
+    	
+    	WebDriver driver = webDriver.get();
+    	if(driver != null) {
+            ((JavascriptExecutor) driver).executeScript("sauce:job-result=" + (result.isSuccess() ? "passed" : "failed"));
+            driver.quit();
+    	}
+    	
     }
 
 	/*********************************************************************/
 
     protected void annotate(String text) {
-        ((JavascriptExecutor) webDriver.get()).executeScript("sauce:context=" + text);
+    	WebDriver driver = webDriver.get();
+    	if(driver != null) {
+            ((JavascriptExecutor) driver).executeScript("sauce:context=" + text);
+    	}
     }
 	
-}
+} 
