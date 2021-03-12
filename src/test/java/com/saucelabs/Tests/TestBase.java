@@ -26,7 +26,7 @@ public class TestBase  {
 
 	/*********************************************************************/
 
-    public String buildTag = System.getenv("BUILD_REPOSITORY_URI");
+    public String buildTag = System.getenv("BUILD_REPOSITORY_URI") + " " + System.getenv("BUILD_BUILDID");
 
     public String username = System.getenv("SAUCE_USERNAME");
 
